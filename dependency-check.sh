@@ -3,14 +3,18 @@
 git config --global user.email $EMAIL
 git config --global user.name $NAME
 export GITHUB_TOKEN=$TOKEN
+echo "check out $BRANCH"
 git checkout $BRANCH
 
+echo "Devise --exclude from $EXCLUDE"
 EXCLUDES=""
 for artifact in $EXCLUDE; do
     EXCLUDES="${EXCLUDES} --exclude=${artifact}"
 done
 
+echo "Devise --directory from $DIRECTORY"
 if [ -z "${DIRECTORY}" ]; then
+    echo "No directory specified, defaulting to ."
     DIRECTORY="."
 fi
 
@@ -19,6 +23,7 @@ for directory in $DIRECTORY; do
     DIRECTORIES="${DIRECTORIES} --directory=${directory}"
 done
 
+echo "Devise --skip from $SKIP"
 SKIPS=""
 for skip in $SKIP; do
     SKIPS="${SKIPS} --skip=${skip}"
@@ -31,6 +36,7 @@ UPGRADE_LIST=$(eval ${UPGRADE_CMD})
 UPGRADES=$(echo ${UPGRADE_LIST} | sed '/Failed to fetch/d' | sed '/Unable to fetch/d' | sed '/Logging initialized/d' | sort -u)
 UPDATE_TIME=$(date +"%Y-%m-%d-%H-%M-%S")
 
+echo "Processing upgrades... $UPGRADES"
 for upgrade in $UPGRADES; do
 
   # Parse each upgrade into its constituent parts
@@ -40,6 +46,8 @@ for upgrade in $UPGRADES; do
   NEW_VERSION=${temp[2]}
   DIFF_URL=${temp[3]}
   MODIFIED_FILE=${temp[4]}
+  
+  echo "Work out branch name based on batch value: $BATCH"
 
   # If we're performing a batch update, reuse the branch name
   # Otherwise, create branch names for each unique update
@@ -48,11 +56,13 @@ for upgrade in $UPGRADES; do
   else
     BRANCH_NAME="dependencies/clojure/$DEP_NAME-$NEW_VERSION"
   fi
+  echo "branch name = $BRANCH_NAME"
 
   # Checkout the branch if it exists, otherwise create it
   echo "Checking out" $BRANCH_NAME
   git checkout $BRANCH_NAME || git checkout -b $BRANCH_NAME
 
+  echo "last command exit status = $?"
   if [[ $? == 0 ]]; then
 
     # Use antq to update the dependency
