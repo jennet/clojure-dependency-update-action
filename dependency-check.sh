@@ -32,9 +32,21 @@ done
 PREFETCH=$(clojure -Stree -Sdeps '{:deps {antq/antq {:mvn/version "RELEASE"}}}')
 FORMATTER="--reporter=format --error-format=\"{{name}},{{version}},{{latest-version}},{{diff-url}}\""
 UPGRADE_CMD="clojure -Sdeps '{:deps {antq/antq {:mvn/version \"RELEASE\"}}}' -m antq.core ${FORMATTER} ${EXCLUDES} ${DIRECTORIES} ${SKIPS}"
+
+echo "Running upgrade command"
+echo $UPGRADE_CMD
+echo 
 UPGRADE_LIST=$(eval ${UPGRADE_CMD})
+
 UPGRADES=$(echo ${UPGRADE_LIST} | sed '/Failed to fetch/d' | sed '/Unable to fetch/d' | sed '/Logging initialized/d' | sort -u)
 UPDATE_TIME=$(date +"%Y-%m-%d-%H-%M-%S")
+
+if [ "$UPGRADES" == "" ] then 
+  echo "NO UPGRADES FOUND"
+  echo "full upgrade list printed below:"
+  echo $UPGRADE_LIST
+  exit
+fi 
 
 echo "Processing upgrades... $UPGRADES"
 for upgrade in $UPGRADES; do
